@@ -943,6 +943,10 @@ function renderShoppingList() {
     if (!grouped[cat]) grouped[cat] = [];
     grouped[cat].push(item);
   });
+  // Sort within each category alphabetically so similar items are adjacent
+  Object.keys(grouped).forEach(function(cat) {
+    grouped[cat].sort(function(a, b) { return a.name.localeCompare(b.name, 'ja'); });
+  });
 
   var html = '<ul class="ingredient-list">';
   CATEGORY_ORDER.forEach(function(cat) {
