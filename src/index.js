@@ -2,11 +2,30 @@
 // 役割: アプリ(index.html)の配信 + データ同期API(/api/data)をD1で提供
 // 認証は Cloudflare Access が前段で担当する（このコードにキーは持たない）。
 
+// 旧GitHub Pagesからのデータ移行(PUT)を受け取れるよう、CORSを許可する
+const MIGRATE_ORIGIN = "https://yuukiniwayma-hub.github.io";
+function corsHeaders(request) {
+  const origin = request.headers.get("Origin");
+  if (origin === MIGRATE_ORIGIN) {
+    return {
+      "Access-Control-Allow-Origin": MIGRATE_ORIGIN,
+      "Access-Control-Allow-Methods": "GET, PUT, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    };
+  }
+  return {};
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
     if (url.pathname === "/api/data") {
+      // CORS プリフライト
+      if (request.method === "OPTIONS") {
+        return new Response(null, { status: 204, headers: corsHeaders(request) });
+      }
+      const cors = corsHeaders(request);
       // 読み込み
       if (request.method === "GET") {
         const row = await env.DB
@@ -16,7 +35,7 @@ export default {
           recipes: JSON.parse((row && row.recipes) || "[]"),
           assignments: JSON.parse((row && row.assignments) || "{}"),
           updated_at: (row && row.updated_at) || "",
-        });
+        }, { headers: cors });
       }
 
       // 保存
@@ -37,7 +56,7 @@ export default {
           )
           .bind(recipes, assignments, updatedAt)
           .run();
-        return new Response(null, { status: 204 });
+        return new Response(null, { status: 204, headers: cors });
       }
 
       return new Response("Method Not Allowed", { status: 405 });

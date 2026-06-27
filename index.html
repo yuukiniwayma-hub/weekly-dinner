@@ -3,13 +3,51 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>献立アプリは移動しました</title>
-<meta http-equiv="refresh" content="0; url=https://weekly-dinner.yuuki-niwayma.workers.dev/">
-<script>location.replace("https://weekly-dinner.yuuki-niwayma.workers.dev/");</script>
-<style>body{font-family:-apple-system,sans-serif;text-align:center;padding:48px 20px;color:#333}a{color:#e67e22;font-weight:bold}</style>
+<title>1週間の献立アプリ</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;text-align:center;padding:40px 20px;color:#333;background:#fafafa}
+  .card{max-width:420px;margin:0 auto;background:#fff;border-radius:16px;padding:28px 20px;box-shadow:0 4px 16px rgba(0,0,0,.08)}
+  h1{font-size:18px;margin:0 0 14px}
+  .btn{display:inline-block;background:#e67e22;color:#fff;border:none;border-radius:10px;padding:14px 22px;font-size:16px;font-weight:bold;margin:8px 4px;cursor:pointer;text-decoration:none}
+  .btn.sub{background:#bbb}
+  .muted{color:#888;font-size:13px}
+  #status{margin-top:14px;font-size:14px;color:#e67e22}
+</style>
 </head>
 <body>
-<p>新しい献立アプリへ移動します…</p>
-<p><a href="https://weekly-dinner.yuuki-niwayma.workers.dev/">開かない場合はこちらをタップ</a></p>
+<div class="card">
+  <h1>1週間の献立アプリ</h1>
+  <div id="content"><p class="muted">読み込み中…</p></div>
+  <div id="status"></div>
+</div>
+<script>
+var NEW_URL = "https://weekly-dinner.yuuki-niwayma.workers.dev/";
+var API = "https://weekly-dinner.yuuki-niwayma.workers.dev/api/data";
+function go(){ location.replace(NEW_URL); }
+function getLocal(){
+  try { return { recipes: JSON.parse(localStorage.getItem('wd_recipes')||'[]'),
+                 assignments: JSON.parse(localStorage.getItem('wd_assignments')||'{}') }; }
+  catch(e){ return { recipes: [], assignments: {} }; }
+}
+var data = getLocal();
+var c = document.getElementById('content');
+if (!data.recipes || data.recipes.length === 0) {
+  c.innerHTML = '<p>新しいアプリへ移動します…</p>';
+  setTimeout(go, 600);
+} else {
+  c.innerHTML = '<p>この端末に <b>レシピ ' + data.recipes.length + '件</b> のデータが残っています。<br>新しいアプリに引き継ぎますか？</p>' +
+    '<button class="btn" id="mig">引き継いで開く</button><button class="btn sub" id="skip">引き継がず開く</button>';
+  document.getElementById('skip').onclick = go;
+  document.getElementById('mig').onclick = function(){
+    document.getElementById('status').textContent = '引き継ぎ中…';
+    fetch(API, { method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ recipes: data.recipes, assignments: data.assignments }) })
+    .then(function(res){
+      if(res.ok){ document.getElementById('status').textContent='完了！新アプリを開きます…'; setTimeout(go, 800); }
+      else { document.getElementById('status').textContent='うまくいきませんでした。もう一度お試しください。'; }
+    }).catch(function(){ document.getElementById('status').textContent='ネットに繋がりませんでした。'; });
+  };
+}
+</script>
 </body>
 </html>
