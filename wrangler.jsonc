@@ -1,0 +1,25 @@
+{
+  // 1週間の献立アプリ — Cloudflare Worker（フロント＋同期API）
+  // 認証は Cloudflare Access（特定メールのみ許可）を別途設定する。
+  "name": "weekly-dinner",
+  "main": "src/index.js",
+  "compatibility_date": "2025-01-01",
+
+  // アプリ本体（public/index.html）を静的アセットとして配信
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+
+  // データ同期用 D1 データベース（database_id はデプロイ時に作成して差し込む）
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "weekly-dinner-db",
+      "database_id": "eb10fc10-472f-4454-9050-43e3c5c397c1"
+    }
+  ],
+
+  // Access をバイパスするプレビューURLを無効化（社内ルール）
+  "preview_urls": false
+}

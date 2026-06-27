@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1週間の晩御飯</title>
+<style>
+  :root {
+    --bg: #f5f0eb;
+    --card: #ffffff;
+    --primary: #e07a5f;
+    --primary-light: #f2cc8f;
+    --accent: #3d405b;
+    --text: #3d405b;
+    --text-light: #81858e;
+    --border: #e8e2dc;
+    --success: #81b29a;
+    --danger: #e07a5f;
+    --shadow: 0 2px 12px rgba(61,64,91,0.08);
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    background: var(--accent);
+    color: #fff;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header h1 { font-size: 1.4rem; font-weight: 700; }
+  .header-actions { display: flex; gap: 8px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: #c9694f; }
+  .btn-outline {
+    background: transparent;
+    color: #fff;
+    border: 1.5px solid rgba(255,255,255,0.4);
+  }
+  .btn-outline:hover { border-color: #fff; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-danger { background: transparent; color: var(--danger); border: 1.5px solid var(--danger); }
+  .btn-danger:hover { background: var(--danger); color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 0.8rem; }
+  .btn-ghost { background: transparent; color: var(--text-light); padding: 4px 8px; }
+  .btn-ghost:hover { color: var(--text); }
+
+  /* Section Label */
+  .section-label {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 18px 24px 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* Calendar Grid */
+  .calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 12px;
+    padding: 12px 24px 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .calendar-side .day-card { min-height: 140px; }
+  .day-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.2s;
+  }
+  .day-card:hover { box-shadow: 0 4px 20px rgba(61,64,91,0.14); }
+  .day-label {
+    padding: 10px 14px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .day-label.mon { border-bottom-color: #e07a5f; }
+  .day-label.tue { border-bottom-color: #f2cc8f; }
+  .day-label.wed { border-bottom-color: #81b29a; }
+  .day-label.thu { border-bottom-color: #3d405b; }
+  .day-label.fri { border-bottom-color: #e07a5f; }
+  .day-label.sat { border-bottom-color: #5b9bd5; color: #5b9bd5; }
+  .day-label.sun { border-bottom-color: #e07a5f; color: #e07a5f; }
+
+  .day-content {
+    flex: 1;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .recipe-display { flex: 1; }
+  .recipe-display .recipe-name {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 6px;
+  }
+  .recipe-display .recipe-name a {
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1.5px dashed var(--primary);
+    transition: color 0.15s;
+  }
+  .recipe-display .recipe-name a:hover {
+    color: var(--primary);
+  }
+  .recipe-display .recipe-ingredients {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    line-height: 1.5;
+  }
+  .recipe-display .recipe-memo {
+    margin-top: 8px;
+    font-size: 0.75rem;
+    color: var(--primary);
+    font-style: italic;
+  }
+  .empty-state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-light);
+    font-size: 0.82rem;
+  }
+  .day-actions {
+    display: flex;
+    gap: 4px;
+    margin-top: 10px;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(61,64,91,0.4);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+    width: 90%;
+    max-width: 520px;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .modal-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--card);
+    z-index: 1;
+  }
+  .modal-header h2 { font-size: 1.1rem; }
+  .modal-body { padding: 20px; }
+  .modal-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  /* Forms */
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+
+  /* Recipe List */
+  .recipe-list { list-style: none; }
+  .recipe-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .recipe-list-item:last-child { border-bottom: none; }
+  .recipe-list-info h3 { font-size: 0.92rem; }
+  .recipe-list-info p { font-size: 0.78rem; color: var(--text-light); margin-top: 2px; }
+  .recipe-list-actions { display: flex; gap: 4px; }
+
+  /* Shopping List */
+  .shopping-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px 24px;
+  }
+  .shopping-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .shopping-header {
+    padding: 14px 20px;
+    border-bottom: 2px solid var(--success);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  .shopping-header .icon { font-size: 1.2rem; }
+  .shopping-body { padding: 20px; }
+  .shopping-empty {
+    text-align: center;
+    color: var(--text-light);
+    padding: 12px 0;
+    font-size: 0.88rem;
+  }
+  .ingredient-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 6px 20px;
+  }
+  .ingredient-item {
+    padding: 6px 0;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ingredient-item .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    flex-shrink: 0;
+  }
+  .ingredient-source {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+  .ingredient-category {
+    grid-column: 1 / -1;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent);
+    padding: 8px 0 2px;
+    border-bottom: 1.5px solid var(--accent);
+    margin-top: 4px;
+  }
+  .ingredient-category:first-child { margin-top: 0; }
+
+  /* Image Upload */
+  .image-upload-area {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .image-upload-area:hover {
+    border-color: var(--primary);
+    background: rgba(224,122,95,0.04);
+  }
+  .image-upload-area.dragging {
+    border-color: var(--primary);
+    background: rgba(224,122,95,0.08);
+  }
+  .image-upload-area .upload-icon { font-size: 1.6rem; margin-bottom: 4px; }
+  .image-upload-area .upload-text { font-size: 0.82rem; color: var(--text-light); }
+  .image-upload-area .upload-text strong { color: var(--primary); }
+  .image-upload-area input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .image-preview {
+    margin-bottom: 16px;
+    display: none;
+  }
+  .image-preview img {
+    max-width: 100%;
+    max-height: 160px;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+  .image-preview .remove-image {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: var(--danger);
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: inherit;
+  }
+  .ai-status {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .ai-status.loading {
+    display: block;
+    background: #eef6ff;
+    color: #2563eb;
+  }
+  .ai-status.error {
+    display: block;
+    background: #fef2f2;
+    color: #dc2626;
+  }
+  .ai-status.success {
+    display: block;
+    background: #f0fdf4;
+    color: #16a34a;
+  }
+
+  /* API Key Setting */
+  .api-key-section {
+    background: #f8f6f3;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    font-size: 0.82rem;
+  }
+  .api-key-section summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-light);
+  }
+  .api-key-section .api-key-inner {
+    margin-top: 10px;
+  }
+  .api-key-section input,
+  .api-key-section select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-family: inherit;
+    margin-top: 4px;
+  }
+  .api-key-section input[type="password"] {
+    font-family: monospace;
+  }
+  .api-key-section .api-key-help {
+    margin-top: 6px;
+    font-size: 0.75rem;
+    color: var(--text-light);
+  }
+  .api-key-section .api-key-help a { color: var(--primary); }
+  .provider-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1.5px solid var(--border);
+  }
+  .provider-tab {
+    flex: 1;
+    padding: 7px 10px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: var(--card);
+    color: var(--text-light);
+    border: none;
+    transition: all 0.15s;
+  }
+  .provider-tab.active {
+    background: var(--accent);
+    color: #fff;
+  }
+  .provider-config { display: none; }
+  .provider-config.active { display: block; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .calendar {
+      grid-template-columns: 1fr;
+      max-width: 480px;
+    }
+    .day-card { min-height: 120px; }
+    .calendar-side .day-card { min-height: 100px; }
+    .ingredient-list { grid-template-columns: 1fr; }
+  }
+  /* Sync indicator */
+  .sync-status {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.6);
+    margin-left: 10px;
+    font-weight: 400;
+  }
+  .sync-status.synced { color: var(--success); }
+  .sync-status.syncing { color: var(--primary-light); }
+  .sync-status.error { color: #ff9999; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>1週間の晩御飯<span class="sync-status" id="syncStatus"></span></h1>
+  <div class="header-actions">
+    <button class="btn btn-outline" id="btnOpenRecipeList">レシピ一覧</button>
+    <button class="btn btn-primary" id="btnAddRecipe">+ レシピ追加</button>
+  </div>
+</div>
+
+<div class="section-label">🍖 主菜</div>
+<div class="calendar" id="calendar"></div>
+
+<div class="section-label">🥗 副菜</div>
+<div class="calendar calendar-side" id="calendarSide"></div>
+
+<!-- 買い物リスト -->
+<div class="shopping-section" id="shoppingSection">
+  <div class="shopping-card">
+    <div class="shopping-header">
+      <span class="icon">🛒</span> 今週の買い物リスト
+    </div>
+    <div class="shopping-body" id="shoppingBody">
+      <div class="shopping-empty">曜日にレシピを割り当てると、必要な材料が表示されます</div>
+    </div>
+  </div>
+</div>
+
+<!-- 曜日にレシピを割り当てるモーダル -->
+<div class="modal-overlay" id="assignModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="assignTitle">レシピを選択</h2>
+      <button class="btn-ghost" data-close="assignModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>レシピ</label>
+        <select id="assignSelect"><option value="">-- 選択してください --</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" style="color:var(--text);border-color:var(--border)" id="btnClearAssign">クリア</button>
+      <button class="btn btn-primary" id="btnSaveAssign">決定</button>
+    </div>
+  </div>
+</div>
+
+<!-- レシピ追加/編集モーダル -->
+<div class="modal-overlay" id="recipeModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="recipeModalTitle">レシピ追加</h2>
+      <button class="btn-ghost" data-close="recipeModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editRecipeId">
+
+      <!-- 画像読み取りセクション -->
+      <div class="image-upload-area" id="imageUploadArea">
+        <div class="upload-icon">📷</div>
+        <div class="upload-text"><strong>メニュー画像をアップロード</strong><br>料理名と材料をAIが自動読み取り</div>
+        <input type="file" id="imageFileInput" accept="image/*">
+      </div>
+
+      <div class="image-preview" id="imagePreview">
+        <img id="previewImg" src="" alt="プレビュー">
+        <br>
+        <button class="remove-image" id="btnRemoveImage">画像を削除</button>
+      </div>
+
+      <div class="ai-status" id="aiStatus"></div>
+
+      <details class="api-key-section" id="apiKeySection">
+        <summary>AI設定</summary>
+        <div class="api-key-inner">
+          <div class="provider-tabs">
+            <button class="provider-tab" data-provider="gemini">Gemini</button>
+            <button class="provider-tab active" data-provider="groq">Groq（おすすめ）</button>
+            <button class="provider-tab" data-provider="openai">OpenAI</button>
+          </div>
+          <div class="provider-config" id="configGemini">
+            <input type="password" id="geminiApiKey" placeholder="AIza...">
+            <div class="api-key-help">
+              無料 / 制限あり｜<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> でキー取得
+            </div>
+          </div>
+          <div class="provider-config active" id="configGroq">
+            <input type="password" id="groqApiKey" placeholder="gsk_...">
+            <div class="api-key-help">
+              無料・高速｜<a href="https://console.groq.com/keys" target="_blank" rel="noopener">Groq Console</a> でキー取得
+            </div>
+          </div>
+          <div class="provider-config" id="configOpenai">
+            <input type="password" id="openaiApiKey" placeholder="sk-...">
+            <div class="api-key-help">
+              有料・高速｜<a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">OpenAI Dashboard</a> でキー取得
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <div class="form-group">
+        <label>レシピ名</label>
+        <input type="text" id="recipeName" placeholder="例: 肉じゃが">
+      </div>
+      <div class="form-group">
+        <label>材料</label>
+        <textarea id="recipeIngredients" placeholder="例: 牛肉, じゃがいも, 玉ねぎ, にんじん"></textarea>
+      </div>
+      <div class="form-group">
+        <label>メモ（任意）</label>
+        <textarea id="recipeMemo" placeholder="例: 圧力鍋で15分" rows="2"></textarea>
+      </div>
+      <div class="form-group">
+        <label>YouTubeリンク（任意）</label>
+        <input type="url" id="recipeYoutube" placeholder="例: https://www.youtube.com/watch?v=...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" style="color:var(--text);border-color:var(--border)" data-close="recipeModal">キャンセル</button>
+      <button class="btn btn-primary" id="btnSaveRecipe">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- レシピ一覧モーダル -->
+<div class="modal-overlay" id="recipeListModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>レシピ一覧</h2>
+      <button class="btn-ghost" data-close="recipeListModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <ul class="recipe-list" id="recipeList"></ul>
+      <div id="emptyRecipeList" style="text-align:center;color:var(--text-light);padding:24px 0;">
+        レシピがまだありません
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" id="btnAddRecipeFromList">+ 新しいレシピ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var DAYS = [
+  { key: 'mon', label: '月曜日', cls: 'mon' },
+  { key: 'tue', label: '火曜日', cls: 'tue' },
+  { key: 'wed', label: '水曜日', cls: 'wed' },
+  { key: 'thu', label: '木曜日', cls: 'thu' },
+  { key: 'fri', label: '金曜日', cls: 'fri' },
+  { key: 'sat', label: '土曜日', cls: 'sat' },
+  { key: 'sun', label: '日曜日', cls: 'sun' },
+];
+
+var recipes = JSON.parse(localStorage.getItem('wd_recipes') || '[]');
+var rawAssignments = JSON.parse(localStorage.getItem('wd_assignments') || '{}');
+// Migrate old flat format to {main:{}, side:{}}
+var assignments;
+if (rawAssignments.main || rawAssignments.side) {
+  assignments = { main: rawAssignments.main || {}, side: rawAssignments.side || {} };
+} else {
+  assignments = { main: rawAssignments, side: {} };
+}
+var currentAssignDay = null;
+var currentAssignType = 'main'; // 'main' or 'side'
+
+// --- Cloud Sync (Cloudflare Worker + D1 / 同一オリジン /api/data) ---
+// 認証は Cloudflare Access が担当。APIキーはコードに持たない。
+var API_URL = '/api/data';
+var syncTimer = null;
+
+function setSyncStatus(state, msg) {
+  var el = document.getElementById('syncStatus');
+  el.className = 'sync-status ' + state;
+  el.textContent = msg || '';
+}
+
+function saveToCloud() {
+  setSyncStatus('syncing', '同期中...');
+  fetch(API_URL, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      recipes: recipes,
+      assignments: assignments,
+      updated_at: new Date().toISOString()
+    })
+  })
+  .then(function(res) {
+    if (res.ok) {
+      setSyncStatus('synced', '同期済');
+    } else {
+      res.text().then(function(t) { console.error('Sync error:', t); });
+      setSyncStatus('error', '同期エラー');
+    }
+  })
+  .catch(function() {
+    setSyncStatus('error', 'オフライン');
+  });
+}
+
+function loadFromCloud() {
+  setSyncStatus('syncing', '読み込み中...');
+  return fetch(API_URL, { headers: { 'Accept': 'application/json' } })
+  .then(function(res) {
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  })
+  .then(function(row) {
+    if (row && (row.recipes || row.assignments)) {
+      if (row.recipes) recipes = row.recipes;
+      if (row.assignments) {
+        if (row.assignments.main || row.assignments.side) {
+          assignments = { main: row.assignments.main || {}, side: row.assignments.side || {} };
+        } else {
+          assignments = { main: row.assignments, side: {} };
+        }
+      }
+      localStorage.setItem('wd_recipes', JSON.stringify(recipes));
+      localStorage.setItem('wd_assignments', JSON.stringify(assignments));
+      setSyncStatus('synced', '同期済');
+      return true;
+    }
+    setSyncStatus('', '');
+    return false;
+  })
+  .catch(function() {
+    setSyncStatus('error', 'オフライン');
+    return false;
+  });
+}
+
+function save() {
+  localStorage.setItem('wd_recipes', JSON.stringify(recipes));
+  localStorage.setItem('wd_assignments', JSON.stringify(assignments));
+  // Debounce cloud sync (wait 500ms after last save)
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(saveToCloud, 500);
+}
+
+function esc(str) {
+  var d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+// --- Calendar Render ---
+function renderCalendar(containerId, type) {
+  var cal = document.getElementById(containerId);
+  var assignMap = assignments[type];
+  cal.innerHTML = DAYS.map(function(day) {
+    var recipeId = assignMap[day.key];
+    var recipe = recipes.find(function(r) { return r.id === recipeId; });
+    return '<div class="day-card">' +
+      '<div class="day-label ' + day.cls + '">' + day.label + '</div>' +
+      '<div class="day-content">' +
+        (recipe ?
+          '<div class="recipe-display">' +
+            '<div class="recipe-name">' + (recipe.youtube ? '<a href="' + esc(recipe.youtube) + '" target="_blank" rel="noopener">' + esc(recipe.name) + '</a>' : esc(recipe.name)) + '</div>' +
+            '<div class="recipe-ingredients">' + esc(recipe.ingredients) + '</div>' +
+            (recipe.memo ? '<div class="recipe-memo">' + esc(recipe.memo) + '</div>' : '') +
+          '</div>'
+        :
+          '<div class="empty-state">未設定</div>'
+        ) +
+        '<div class="day-actions">' +
+          '<button class="btn btn-sm btn-primary" data-assign="' + day.key + '" data-type="' + type + '">' +
+            (recipe ? '変更' : '選択') +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function render() {
+  renderCalendar('calendar', 'main');
+  renderCalendar('calendarSide', 'side');
+}
+
+// --- Assign Modal ---
+function openAssignModal(dayKey, type) {
+  currentAssignDay = dayKey;
+  currentAssignType = type || 'main';
+  var day = DAYS.find(function(d) { return d.key === dayKey; });
+  var typeLabel = currentAssignType === 'side' ? '副菜' : '主菜';
+  document.getElementById('assignTitle').textContent = day.label + ' の' + typeLabel;
+  var sel = document.getElementById('assignSelect');
+  var assignMap = assignments[currentAssignType];
+  sel.innerHTML = '<option value="">-- 選択してください --</option>' +
+    recipes.map(function(r) {
+      return '<option value="' + r.id + '"' + (assignMap[dayKey] === r.id ? ' selected' : '') + '>' + esc(r.name) + '</option>';
+    }).join('');
+  openModal('assignModal');
+}
+
+function saveAssignment() {
+  var val = document.getElementById('assignSelect').value;
+  if (val) {
+    assignments[currentAssignType][currentAssignDay] = val;
+  } else {
+    delete assignments[currentAssignType][currentAssignDay];
+  }
+  save(); render(); renderShoppingList();
+  closeModal('assignModal');
+}
+
+function clearAssignment() {
+  delete assignments[currentAssignType][currentAssignDay];
+  save(); render(); renderShoppingList();
+  closeModal('assignModal');
+}
+
+// --- Recipe Modal ---
+function resetRecipeModal() {
+  document.getElementById('recipeModalTitle').textContent = 'レシピ追加';
+  document.getElementById('editRecipeId').value = '';
+  document.getElementById('recipeName').value = '';
+  document.getElementById('recipeIngredients').value = '';
+  document.getElementById('recipeMemo').value = '';
+  document.getElementById('recipeYoutube').value = '';
+  // Reset image upload
+  document.getElementById('imageFileInput').value = '';
+  document.getElementById('imagePreview').style.display = 'none';
+  document.getElementById('previewImg').src = '';
+  document.getElementById('imageUploadArea').style.display = '';
+  setAiStatus('');
+}
+
+function restoreApiKeys() {
+  document.getElementById('geminiApiKey').value = localStorage.getItem('wd_gemini_key') || '';
+  document.getElementById('groqApiKey').value = localStorage.getItem('wd_groq_key') || '';
+  document.getElementById('openaiApiKey').value = localStorage.getItem('wd_openai_key') || '';
+  setProvider(currentProvider);
+}
+
+function openAddRecipeModal() {
+  resetRecipeModal();
+  restoreApiKeys();
+  openModal('recipeModal');
+}
+
+function openEditRecipeModal(id) {
+  var r = recipes.find(function(x) { return x.id === id; });
+  if (!r) return;
+  resetRecipeModal();
+  document.getElementById('recipeModalTitle').textContent = 'レシピ編集';
+  document.getElementById('editRecipeId').value = id;
+  document.getElementById('recipeName').value = r.name;
+  document.getElementById('recipeIngredients').value = r.ingredients;
+  document.getElementById('recipeMemo').value = r.memo || '';
+  document.getElementById('recipeYoutube').value = r.youtube || '';
+  restoreApiKeys();
+  closeModal('recipeListModal');
+  openModal('recipeModal');
+}
+
+function saveRecipe() {
+  var name = document.getElementById('recipeName').value.trim();
+  if (!name) { alert('レシピ名を入力してください'); return; }
+  var ingredients = document.getElementById('recipeIngredients').value.trim();
+  var memo = document.getElementById('recipeMemo').value.trim();
+  var youtube = document.getElementById('recipeYoutube').value.trim();
+  var editId = document.getElementById('editRecipeId').value;
+
+  if (editId) {
+    var r = recipes.find(function(x) { return x.id === editId; });
+    if (r) { r.name = name; r.ingredients = ingredients; r.memo = memo; r.youtube = youtube; }
+  } else {
+    recipes.push({ id: Date.now().toString(), name: name, ingredients: ingredients, memo: memo, youtube: youtube });
+  }
+  save(); render(); renderShoppingList();
+  closeModal('recipeModal');
+}
+
+function deleteRecipe(id) {
+  if (!confirm('このレシピを削除しますか？')) return;
+  recipes = recipes.filter(function(r) { return r.id !== id; });
+  ['main', 'side'].forEach(function(type) {
+    for (var day in assignments[type]) {
+      if (assignments[type][day] === id) delete assignments[type][day];
+    }
+  });
+  save(); render(); renderShoppingList(); renderRecipeList();
+}
+
+// --- Recipe List Modal ---
+function renderRecipeList() {
+  var list = document.getElementById('recipeList');
+  var empty = document.getElementById('emptyRecipeList');
+  if (recipes.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = recipes.map(function(r) {
+    return '<li class="recipe-list-item">' +
+      '<div class="recipe-list-info">' +
+        '<h3>' + esc(r.name) + '</h3>' +
+        '<p>' + esc(r.ingredients) + '</p>' +
+      '</div>' +
+      '<div class="recipe-list-actions">' +
+        '<button class="btn btn-sm btn-ghost" data-edit="' + r.id + '">編集</button>' +
+        '<button class="btn btn-sm btn-danger" data-delete="' + r.id + '">削除</button>' +
+      '</div>' +
+    '</li>';
+  }).join('');
+}
+
+// --- Shopping List ---
+function renderShoppingList() {
+  var body = document.getElementById('shoppingBody');
+  var assignedRecipes = [];
+  ['main', 'side'].forEach(function(type) {
+    DAYS.forEach(function(day) {
+      var rid = assignments[type][day.key];
+      if (rid) {
+        var r = recipes.find(function(x) { return x.id === rid; });
+        if (r) assignedRecipes.push({ day: day.label, recipe: r });
+      }
+    });
+  });
+  if (assignedRecipes.length === 0) {
+    body.innerHTML = '<div class="shopping-empty">曜日にレシピを割り当てると、必要な材料が表示されます</div>';
+    return;
+  }
+  var ingredientMap = {};
+  assignedRecipes.forEach(function(item) {
+    var parts = item.recipe.ingredients.split(/[,、\n]+/);
+    parts.forEach(function(raw) {
+      var name = raw.trim();
+      if (!name) return;
+      var key = name.toLowerCase();
+      if (!ingredientMap[key]) {
+        ingredientMap[key] = { name: name, sources: [], category: classifyIngredient(name) };
+      }
+      if (ingredientMap[key].sources.indexOf(item.recipe.name) === -1) {
+        ingredientMap[key].sources.push(item.recipe.name);
+      }
+    });
+  });
+
+  var CATEGORY_ORDER = [
+    { key: 'meat', label: '🥩 肉類' },
+    { key: 'fish', label: '🐟 魚介類' },
+    { key: 'vegetable', label: '🥬 野菜' },
+    { key: 'tofu', label: '🫘 豆腐・大豆製品' },
+    { key: 'egg', label: '🥚 卵・乳製品' },
+    { key: 'grain', label: '🍚 米・麺・粉類' },
+    { key: 'seasoning', label: '🧂 調味料' },
+    { key: 'other', label: '📦 その他' }
+  ];
+
+  var items = Object.keys(ingredientMap).map(function(k) { return ingredientMap[k]; });
+  var grouped = {};
+  items.forEach(function(item) {
+    var cat = item.category;
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(item);
+  });
+  // Sort within each category alphabetically so similar items are adjacent
+  Object.keys(grouped).forEach(function(cat) {
+    grouped[cat].sort(function(a, b) { return a.name.localeCompare(b.name, 'ja'); });
+  });
+
+  var html = '<ul class="ingredient-list">';
+  CATEGORY_ORDER.forEach(function(cat) {
+    if (!grouped[cat.key] || grouped[cat.key].length === 0) return;
+    html += '<li class="ingredient-category">' + cat.label + '</li>';
+    grouped[cat.key].forEach(function(item) {
+      html += '<li class="ingredient-item">' +
+        '<span class="dot"></span>' +
+        esc(item.name) +
+        (item.sources.length > 1 ? '<span class="ingredient-source">' + esc(item.sources.join(', ')) + '</span>' : '') +
+        '</li>';
+    });
+  });
+  html += '</ul>';
+  body.innerHTML = html;
+}
+
+function classifyIngredient(name) {
+  var n = name.toLowerCase();
+  // 肉類
+  if (/鶏|豚|牛|肉|ひき肉|ベーコン|ハム|ソーセージ|ウインナー|もも|むね|ささみ|手羽|バラ/.test(n)) return 'meat';
+  // 魚介類
+  if (/魚|サバ|鮭|サーモン|エビ|えび|海老|イカ|いか|タコ|たこ|ツナ|しらす|アジ|あじ|カツオ|かつお|ぶり|マグロ|まぐろ|ちくわ|かまぼこ/.test(n)) return 'fish';
+  // 豆腐・大豆製品
+  if (/豆腐|厚揚げ|油揚げ|納豆|大豆|味噌|みそ/.test(n)) return 'tofu';
+  // 卵・乳製品
+  if (/卵|たまご|チーズ|バター|牛乳|ミルク|生クリーム|ヨーグルト/.test(n)) return 'egg';
+  // 野菜
+  if (/玉ねぎ|にんじん|人参|じゃがいも|キャベツ|レタス|トマト|ほうれん草|小松菜|ネギ|ねぎ|大根|なす|ナス|ピーマン|もやし|きゅうり|ブロッコリー|にら|ニラ|しょうが|生姜|にんにく|ニンニク|かぼちゃ|ごぼう|れんこん|白菜|セロリ|アスパラ|オクラ|枝豆|パプリカ|ズッキーニ|里芋|長芋|山芋|水菜|三つ葉|しそ|大葉|パセリ|春菊/.test(n)) return 'vegetable';
+  // 米・麺・粉類
+  if (/米|ご飯|パスタ|うどん|そば|そうめん|中華麺|パン|小麦粉|薄力粉|強力粉|片栗粉|天ぷら粉|皮/.test(n)) return 'grain';
+  // 調味料
+  if (/醤油|しょうゆ|塩|砂糖|酢|酒|みりん|味醂|油|ごま油|サラダ油|オリーブ|ソース|ケチャップ|マヨネーズ|ポン酢|だし|出汁|コンソメ|鶏がら|中華スープ|めんつゆ|オイスター|ナンプラー|カレー|ルー|コショウ|こしょう|胡椒|コチュジャン|豆板醤|わさび|からし|マスタード|ふりかけ|クミン|唐辛子|七味|一味|チリ|ガーリック|ハーブ|バジル|大さじ|小さじ|少々|適量|振り/.test(n)) return 'seasoning';
+  // その他
+  return 'other';
+}
+
+// --- Image AI Recognition ---
+function setAiStatus(type, message) {
+  var el = document.getElementById('aiStatus');
+  el.className = 'ai-status';
+  if (!type) { el.style.display = 'none'; return; }
+  el.classList.add(type);
+  el.textContent = message || '';
+  el.style.display = 'block';
+}
+
+var MAX_RETRIES = 5;
+var retryTimer = null;
+var currentProvider = localStorage.getItem('wd_provider') || 'groq';
+
+function getProvider() {
+  return currentProvider;
+}
+
+function setProvider(p) {
+  currentProvider = p;
+  localStorage.setItem('wd_provider', p);
+  // Update UI
+  document.querySelectorAll('.provider-tab').forEach(function(tab) {
+    tab.classList.toggle('active', tab.getAttribute('data-provider') === p);
+  });
+  document.getElementById('configGemini').classList.toggle('active', p === 'gemini');
+  document.getElementById('configGroq').classList.toggle('active', p === 'groq');
+  document.getElementById('configOpenai').classList.toggle('active', p === 'openai');
+}
+
+// --- Common result handler ---
+function handleAiResult(text) {
+  var jsonStr = text;
+  var codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeBlockMatch) {
+    jsonStr = codeBlockMatch[1].trim();
+  }
+
+  var parsed;
+  try {
+    parsed = JSON.parse(jsonStr);
+  } catch(e) {
+    setAiStatus('error', 'JSONの解析に失敗しました');
+    return;
+  }
+
+  if (parsed.recipes && parsed.recipes.length > 0) {
+    var first = parsed.recipes[0];
+    document.getElementById('recipeName').value = first.name || '';
+    document.getElementById('recipeIngredients').value = first.ingredients || '';
+    document.getElementById('recipeMemo').value = first.memo || '';
+
+    if (parsed.recipes.length > 1) {
+      for (var i = 1; i < parsed.recipes.length; i++) {
+        var r = parsed.recipes[i];
+        recipes.push({
+          id: (Date.now() + i).toString(),
+          name: r.name || '',
+          ingredients: r.ingredients || '',
+          memo: r.memo || ''
+        });
+      }
+      save(); render(); renderShoppingList();
+      setAiStatus('success', parsed.recipes.length + '品を検出しました。1品目を表示中、残りは自動保存しました');
+    } else {
+      setAiStatus('success', '「' + first.name + '」を検出しました。内容を確認して保存してください');
+    }
+  } else {
+    setAiStatus('error', '料理を検出できませんでした');
+  }
+}
+
+var AI_PROMPT = 'この画像はメニューや料理の写真です。以下のJSON形式で情報を返してください。\n\nルール:\n- 画像に分量（大さじ1、100gなど）が書いてあれば必ずそのまま含めてください\n- 画像に分量がない場合は材料名のみでOKです\n- 複数の料理がある場合はrecipesの配列に複数入れてください\n\n{"recipes":[{"name":"料理名","ingredients":"材料1 分量1, 材料2 分量2, 材料3 分量3","memo":"調理メモ（あれば）"}]}\n\nJSON以外は出力しないでください。';
+
+// --- Gemini API ---
+function callGeminiApi(apiKey, base64Data, mimeType, attempt) {
+  var requestBody = {
+    contents: [{
+      parts: [
+        { text: AI_PROMPT },
+        { inlineData: { mimeType: mimeType, data: base64Data } }
+      ]
+    }]
+  };
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=' + apiKey;
+
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(requestBody)
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.error) {
+      var msg = data.error.message || '';
+      var retryMatch = msg.match(/retry in (\d+(?:\.\d+)?)/i);
+      if (retryMatch && attempt < MAX_RETRIES) {
+        var waitSec = Math.ceil(parseFloat(retryMatch[1])) + 5;
+        startGeminiRetry(apiKey, base64Data, mimeType, attempt, waitSec);
+        return;
+      }
+      if (/quota|rate/i.test(msg) && attempt < MAX_RETRIES) {
+        startGeminiRetry(apiKey, base64Data, mimeType, attempt, 60);
+        return;
+      }
+      if (/quota|rate/i.test(msg)) {
+        setAiStatus('error', 'Gemini API制限中です。OpenAIに切り替えるか、数分後にお試しください');
+      } else {
+        setAiStatus('error', 'API エラー: ' + msg);
+      }
+      return;
+    }
+    var text = '';
+    try {
+      text = data.candidates[0].content.parts[0].text;
+    } catch(e) {
+      setAiStatus('error', '応答の解析に失敗しました');
+      return;
+    }
+    handleAiResult(text);
+  })
+  .catch(function(err) {
+    setAiStatus('error', '通信エラー: ' + err.message);
+  });
+}
+
+function startGeminiRetry(apiKey, base64Data, mimeType, attempt, totalSec) {
+  var remaining = totalSec;
+  if (retryTimer) clearInterval(retryTimer);
+  setAiStatus('loading', '制限中... ' + remaining + '秒後に自動リトライ (' + (attempt + 1) + '/' + MAX_RETRIES + ')');
+  retryTimer = setInterval(function() {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(retryTimer);
+      retryTimer = null;
+      setAiStatus('loading', 'リトライ中...');
+      callGeminiApi(apiKey, base64Data, mimeType, attempt + 1);
+    } else {
+      setAiStatus('loading', '制限中... ' + remaining + '秒後に自動リトライ (' + (attempt + 1) + '/' + MAX_RETRIES + ')');
+    }
+  }, 1000);
+}
+
+// --- OpenAI API ---
+function callOpenAiApi(apiKey, dataUrl) {
+  var requestBody = {
+    model: 'gpt-4o-mini',
+    messages: [{
+      role: 'user',
+      content: [
+        { type: 'text', text: AI_PROMPT },
+        { type: 'image_url', image_url: { url: dataUrl, detail: 'low' } }
+      ]
+    }],
+    max_tokens: 1000
+  };
+
+  fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + apiKey
+    },
+    body: JSON.stringify(requestBody)
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.error) {
+      setAiStatus('error', 'OpenAI エラー: ' + (data.error.message || 'Unknown'));
+      return;
+    }
+    var text = '';
+    try {
+      text = data.choices[0].message.content;
+    } catch(e) {
+      setAiStatus('error', '応答の解析に失敗しました');
+      return;
+    }
+    handleAiResult(text);
+  })
+  .catch(function(err) {
+    setAiStatus('error', '通信エラー: ' + err.message);
+  });
+}
+
+// --- Groq API (free, fast, OpenAI-compatible) ---
+function callGroqApi(apiKey, dataUrl) {
+  var requestBody = {
+    model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+    messages: [{
+      role: 'user',
+      content: [
+        { type: 'text', text: AI_PROMPT },
+        { type: 'image_url', image_url: { url: dataUrl } }
+      ]
+    }],
+    max_tokens: 1000
+  };
+
+  fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + apiKey
+    },
+    body: JSON.stringify(requestBody)
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.error) {
+      setAiStatus('error', 'Groq エラー: ' + (data.error.message || 'Unknown'));
+      return;
+    }
+    var text = '';
+    try {
+      text = data.choices[0].message.content;
+    } catch(e) {
+      setAiStatus('error', '応答の解析に失敗しました');
+      return;
+    }
+    handleAiResult(text);
+  })
+  .catch(function(err) {
+    setAiStatus('error', '通信エラー: ' + err.message);
+  });
+}
+
+function fileToBase64(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function() { resolve(reader.result); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function handleImageUpload(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+
+  // Cancel any pending retry
+  if (retryTimer) { clearInterval(retryTimer); retryTimer = null; }
+
+  fileToBase64(file).then(function(dataUrl) {
+    // Show preview
+    document.getElementById('previewImg').src = dataUrl;
+    document.getElementById('imagePreview').style.display = 'block';
+    document.getElementById('imageUploadArea').style.display = 'none';
+
+    var provider = getProvider();
+
+    var keyId = provider === 'openai' ? 'openaiApiKey' : provider === 'groq' ? 'groqApiKey' : 'geminiApiKey';
+    var storageKey = 'wd_' + provider + '_key';
+    var apiKey = document.getElementById(keyId).value.trim();
+    if (!apiKey) apiKey = localStorage.getItem(storageKey) || '';
+    if (!apiKey) {
+      var names = { gemini: 'Gemini', groq: 'Groq', openai: 'OpenAI' };
+      setAiStatus('error', names[provider] + ' APIキーを設定してください');
+      document.getElementById('apiKeySection').open = true;
+      return;
+    }
+    localStorage.setItem(storageKey, apiKey);
+    setAiStatus('loading', '画像を解析中...');
+
+    if (provider === 'openai') {
+      callOpenAiApi(apiKey, dataUrl);
+    } else if (provider === 'groq') {
+      callGroqApi(apiKey, dataUrl);
+    } else {
+      var base64Data = dataUrl.split(',')[1];
+      callGeminiApi(apiKey, base64Data, file.type, 0);
+    }
+  });
+}
+
+// --- Event Listeners ---
+
+// Header buttons
+document.getElementById('btnOpenRecipeList').addEventListener('click', function() {
+  renderRecipeList();
+  openModal('recipeListModal');
+});
+document.getElementById('btnAddRecipe').addEventListener('click', openAddRecipeModal);
+
+// Assign modal buttons
+document.getElementById('btnSaveAssign').addEventListener('click', saveAssignment);
+document.getElementById('btnClearAssign').addEventListener('click', clearAssignment);
+
+// Recipe modal save button
+document.getElementById('btnSaveRecipe').addEventListener('click', saveRecipe);
+
+// Recipe list modal - add new recipe button
+document.getElementById('btnAddRecipeFromList').addEventListener('click', function() {
+  closeModal('recipeListModal');
+  openAddRecipeModal();
+});
+
+// Image upload
+document.getElementById('imageFileInput').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (file) handleImageUpload(file);
+});
+
+// Drag and drop
+var uploadArea = document.getElementById('imageUploadArea');
+uploadArea.addEventListener('dragover', function(e) {
+  e.preventDefault();
+  uploadArea.classList.add('dragging');
+});
+uploadArea.addEventListener('dragleave', function() {
+  uploadArea.classList.remove('dragging');
+});
+uploadArea.addEventListener('drop', function(e) {
+  e.preventDefault();
+  uploadArea.classList.remove('dragging');
+  var file = e.dataTransfer.files[0];
+  if (file) handleImageUpload(file);
+});
+
+// Remove image
+document.getElementById('btnRemoveImage').addEventListener('click', function() {
+  document.getElementById('imageFileInput').value = '';
+  document.getElementById('imagePreview').style.display = 'none';
+  document.getElementById('previewImg').src = '';
+  document.getElementById('imageUploadArea').style.display = '';
+  setAiStatus('');
+});
+
+// Save API keys on input
+document.getElementById('geminiApiKey').addEventListener('input', function() {
+  var key = this.value.trim();
+  if (key) localStorage.setItem('wd_gemini_key', key);
+});
+document.getElementById('groqApiKey').addEventListener('input', function() {
+  var key = this.value.trim();
+  if (key) localStorage.setItem('wd_groq_key', key);
+});
+document.getElementById('openaiApiKey').addEventListener('input', function() {
+  var key = this.value.trim();
+  if (key) localStorage.setItem('wd_openai_key', key);
+});
+
+// Provider tab switching
+document.querySelectorAll('.provider-tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    setProvider(this.getAttribute('data-provider'));
+  });
+});
+
+// Close buttons (data-close attribute)
+document.querySelectorAll('[data-close]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    closeModal(this.getAttribute('data-close'));
+  });
+});
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(function(el) {
+  el.addEventListener('click', function(e) {
+    if (e.target === el) el.classList.remove('active');
+  });
+});
+
+// Event delegation for dynamically rendered buttons
+function handleCalendarClick(e) {
+  var btn = e.target.closest('[data-assign]');
+  if (btn) openAssignModal(btn.getAttribute('data-assign'), btn.getAttribute('data-type') || 'main');
+}
+document.getElementById('calendar').addEventListener('click', handleCalendarClick);
+document.getElementById('calendarSide').addEventListener('click', handleCalendarClick);
+
+document.getElementById('recipeList').addEventListener('click', function(e) {
+  var editBtn = e.target.closest('[data-edit]');
+  if (editBtn) { openEditRecipeModal(editBtn.getAttribute('data-edit')); return; }
+  var delBtn = e.target.closest('[data-delete]');
+  if (delBtn) deleteRecipe(delBtn.getAttribute('data-delete'));
+});
+
+// Initial render - load from cloud first, then render
+render();
+renderShoppingList();
+loadFromCloud().then(function(loaded) {
+  if (loaded) {
+    render();
+    renderShoppingList();
+  }
+});
+</script>
+</body>
+</html>
